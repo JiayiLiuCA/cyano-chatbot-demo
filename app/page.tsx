@@ -16,6 +16,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<string>('gpt-5');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load conversations and model on mount
@@ -168,25 +169,69 @@ export default function Home() {
   const currentConversation = conversations.find((c) => c.id === currentConversationId);
 
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-800">
+    <div className="flex h-screen bg-white dark:bg-gray-800 overflow-hidden">
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <ConversationList
-        conversations={conversations}
-        currentConversationId={currentConversationId}
-        onSelectConversation={handleSelectConversation}
-        onNewConversation={handleNewConversation}
-        onDeleteConversation={handleDeleteConversation}
-      />
+      <div
+        className={`
+          fixed lg:static inset-y-0 left-0 z-50
+          transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0 transition-transform duration-300 ease-in-out
+        `}
+      >
+        <ConversationList
+          conversations={conversations}
+          currentConversationId={currentConversationId}
+          onSelectConversation={(id) => {
+            handleSelectConversation(id);
+            setIsMobileMenuOpen(false); // Close menu on mobile after selection
+          }}
+          onNewConversation={() => {
+            handleNewConversation();
+            setIsMobileMenuOpen(false); // Close menu on mobile after new chat
+          }}
+          onDeleteConversation={handleDeleteConversation}
+        />
+      </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col w-full lg:w-auto">
         {/* Header */}
-        <div className="border-b border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+        <div className="border-b border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 md:p-4">
+          <div className="flex items-center justify-between gap-2">
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+              aria-label="Toggle menu"
+            >
+              <svg
+                className="w-6 h-6 text-gray-700 dark:text-gray-300"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+
+            <h1 className="text-base md:text-xl font-bold text-gray-900 dark:text-gray-100 truncate flex-1">
               {currentConversation?.title || 'Chatbot Demo'}
             </h1>
-            <ModelSelector selectedModel={selectedModel} onModelChange={handleModelChange} />
+
+            <div className="flex-shrink-0">
+              <ModelSelector selectedModel={selectedModel} onModelChange={handleModelChange} />
+            </div>
           </div>
           {error && (
             <div className="mt-2 text-sm text-red-600 dark:text-red-400">
@@ -196,7 +241,7 @@ export default function Home() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
+        <div className="flex-1 overflow-y-auto p-2 md:p-4 bg-gray-50 dark:bg-gray-900">
           <div className="max-w-4xl mx-auto">
             {!currentConversationId ? (
               <div className="flex items-center justify-center h-full">

@@ -18,7 +18,7 @@ export default function ConversationList({
   onDeleteConversation,
 }: ConversationListProps) {
   return (
-    <div className="w-64 bg-gray-100 dark:bg-gray-900 border-r border-gray-300 dark:border-gray-700 flex flex-col h-screen">
+    <div className="w-72 md:w-64 bg-gray-100 dark:bg-gray-900 border-r border-gray-300 dark:border-gray-700 flex flex-col h-screen">
       <div className="p-4 border-b border-gray-300 dark:border-gray-700">
         <button
           onClick={onNewConversation}
