@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     }
 
     // Ask OpenAI for a streaming chat completion given the messages
-    const response = await openai.chat.completions.create(completionParams);
+    const response = await openai.chat.completions.create(completionParams) as any;
 
     // Create a ReadableStream from the OpenAI response
     const encoder = new TextEncoder();
