@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import ChatMessage from '@/components/ChatMessage';
 import ChatInput from '@/components/ChatInput';
 import ConversationList from '@/components/ConversationList';
+import ModelSelector from '@/components/ModelSelector';
 import { storageUtils } from '@/lib/localStorage';
 import { Conversation, Message } from '@/lib/types';
 
@@ -14,11 +15,16 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-5');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load conversations on mount
+  // Load conversations and model on mount
   useEffect(() => {
     loadConversations();
+    const savedModel = localStorage.getItem('selectedModel');
+    if (savedModel) {
+      setSelectedModel(savedModel);
+    }
   }, []);
 
   // Scroll to bottom when messages change
@@ -67,6 +73,11 @@ export default function Home() {
     loadConversations();
   };
 
+  const handleModelChange = (model: string) => {
+    setSelectedModel(model);
+    localStorage.setItem('selectedModel', model);
+  };
+
   const handleSendMessage = async (content: string) => {
     try {
       setError(null);
@@ -106,7 +117,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages, model: selectedModel }),
       });
 
       if (!response.ok) {
@@ -171,9 +182,12 @@ export default function Home() {
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            {currentConversation?.title || 'Chatbot Demo'}
-          </h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              {currentConversation?.title || 'Chatbot Demo'}
+            </h1>
+            <ModelSelector selectedModel={selectedModel} onModelChange={handleModelChange} />
+          </div>
           {error && (
             <div className="mt-2 text-sm text-red-600 dark:text-red-400">
               Error: {error}

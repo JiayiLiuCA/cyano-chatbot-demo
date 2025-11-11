@@ -7,7 +7,7 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   try {
-    const { messages } = await req.json();
+    const { messages, model = 'gpt-5' } = await req.json();
 
     // Validate that we have messages
     if (!messages || !Array.isArray(messages)) {
@@ -27,14 +27,30 @@ export async function POST(req: Request) {
       );
     }
 
-    // Ask OpenAI for a streaming chat completion given the messages
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+    // Determine if this is a reasoning model (O3, O1, GPT-5)
+    const isGPT5 = model.includes('gpt-5');
+    const isO3 = model.includes('o3');
+    const isReasoningModel = isGPT5 || isO3 || model.includes('o1');
+
+    // Build parameters based on model type
+    const completionParams: any = {
+      model: model,
       stream: true,
       messages: messages,
-      temperature: 0.7,
-      max_tokens: 2000,
-    });
+      max_completion_tokens: 4000, // Use max_completion_tokens for new models
+    };
+
+    // Temperature is NOT supported for reasoning models (GPT-5, O3, O1)
+    // Do not add temperature for reasoning models
+
+    // Add reasoning_effort for GPT-5 models
+    // Options: 'minimal', 'low', 'medium', 'high'
+    if (isGPT5) {
+      completionParams.reasoning_effort = 'medium'; // medium is the default
+    }
+
+    // Ask OpenAI for a streaming chat completion given the messages
+    const response = await openai.chat.completions.create(completionParams);
 
     // Create a ReadableStream from the OpenAI response
     const encoder = new TextEncoder();
