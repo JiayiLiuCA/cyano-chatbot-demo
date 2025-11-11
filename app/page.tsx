@@ -86,13 +86,16 @@ export default function Home() {
         role: 'user',
         content,
       });
-      loadConversations();
+
+      // Immediately load the updated conversation to show the user message
+      const updatedConv = storageUtils.getConversation(convId);
+      if (!updatedConv) return;
+
+      setCurrentMessages(updatedConv.messages);
+      loadConversations(); // Update the sidebar
 
       // Prepare messages for API
-      const conv = storageUtils.getConversation(convId);
-      if (!conv) return;
-
-      const apiMessages = conv.messages.map((msg) => ({
+      const apiMessages = updatedConv.messages.map((msg) => ({
         role: msg.role,
         content: msg.content,
       }));
@@ -133,6 +136,12 @@ export default function Home() {
           role: 'assistant',
           content: fullResponse,
         });
+
+        // Load the final conversation with assistant's response
+        const finalConv = storageUtils.getConversation(convId);
+        if (finalConv) {
+          setCurrentMessages(finalConv.messages);
+        }
         loadConversations();
         setStreamingMessage('');
       }
